@@ -23,8 +23,6 @@ func (dictionary Dictionary) Add(key, value string) error {
 		dictionary[key] = value
 	case nil:
 		return ErrWordExists
-	default:
-		return err
 	}
 	return nil
 }
@@ -36,8 +34,6 @@ func (dictionary Dictionary) Update(word, definition string) error {
 		return ErrWordDoesNotExist
 	case nil:
 		dictionary[word] = definition
-	default:
-		return err
 	}
 	return nil
 }
