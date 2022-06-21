@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,10 +21,24 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
-	response := httptest.NewRecorder()
-	server.ServeHTTP(response, newGetScoreRequest(player))
-	assertStatus(t, response.Code, http.StatusOK)
-	assertResponseBody(t, response.Body.String(), "3")
+	t.Run("get score", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newGetScoreRequest(player))
+		assertStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), "3")
+	})
+
+	t.Run("get league", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newLeagueRequest())
+		assertStatus(t, response.Code, http.StatusOK)
+		got := getLeagueFromResponse(t, response.Body)
+		want := []Player{
+			{"Pepper", 3},
+		}
+		assertLeague(t, got, want)
+	})
+
 }
 
 func TestGETPlayers(t *testing.T) {
@@ -119,7 +134,7 @@ func TestLeague(t *testing.T) {
 		request := newLeagueRequest()
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
-		got := getLeagueFromResponse(t, response)
+		got := getLeagueFromResponse(t, response.Body)
 		assertStatus(t, response.Code, http.StatusOK)
 		assertLeague(t, got, wantedLeague)
 		assertContentType(t, response, jsonContentType)
@@ -139,12 +154,12 @@ func assertLeague(t *testing.T, got, wantedLeague []Player) {
 	}
 }
 
-func getLeagueFromResponse(t *testing.T, response *httptest.ResponseRecorder) []Player {
+func getLeagueFromResponse(t *testing.T, body *bytes.Buffer) []Player {
 	var got []Player
-	err := json.NewDecoder(response.Body).Decode(&got)
+	err := json.NewDecoder(body).Decode(&got)
 
 	if err != nil {
-		t.Fatalf("Unable to parse response from server '%s' into slice of Player,'%v'", response.Body, err)
+		t.Fatalf("Unable to parse response from server '%s' into slice of Player,'%v'", body, err)
 	}
 	return got
 }
