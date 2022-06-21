@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const jsonContentType = "application/json"
+
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	store := NewInMemoryPlayerStore()
 	server := NewPlayerServer(store)
@@ -120,11 +122,15 @@ func TestLeague(t *testing.T) {
 		got := getLeagueFromResponse(t, response)
 		assertStatus(t, response.Code, http.StatusOK)
 		assertLeague(t, got, wantedLeague)
-		if response.Header().Get("content-type") != "application/json" {
-			t.Errorf("response did not have content-type of application/json,got '%v'", response.Header())
-		}
+		assertContentType(t, response, jsonContentType)
 	})
 
+}
+
+func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want string) {
+	if response.Header().Get("content-type") != want {
+		t.Errorf("response did not have content-type of application/json,got '%v'", response.Header())
+	}
 }
 
 func assertLeague(t *testing.T, got, wantedLeague []Player) {
