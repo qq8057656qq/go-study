@@ -22,7 +22,7 @@ func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
 }
 
 func main() {
-	server := &PlayerServer{NewInMemoryPlayerStore()}
+	server := NewPlayerServer(NewInMemoryPlayerStore())
 	if err := http.ListenAndServe(":5001", server); err != nil {
 		log.Fatalf("could not listen on port 5001 %v", err)
 	}

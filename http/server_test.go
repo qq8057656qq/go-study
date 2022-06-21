@@ -9,7 +9,7 @@ import (
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	store := NewInMemoryPlayerStore()
-	server := PlayerServer{store}
+	server := NewPlayerServer(store)
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -30,7 +30,7 @@ func TestGETPlayers(t *testing.T) {
 		},
 		nil,
 	}
-	server := &PlayerServer{&store}
+	server := NewPlayerServer(&store)
 	t.Run("returns People's scope", func(t *testing.T) {
 		request := newGetScoreRequest("Pepper")
 		response := httptest.NewRecorder()
@@ -62,7 +62,7 @@ func TestStoreWins(t *testing.T) {
 			map[string]int{},
 			nil,
 		}
-		server := &PlayerServer{&store}
+		server := NewPlayerServer(&store)
 		request := newPostWinRequest("Pepper")
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -74,7 +74,7 @@ func TestStoreWins(t *testing.T) {
 			map[string]int{},
 			nil,
 		}
-		server := &PlayerServer{&store}
+		server := NewPlayerServer(&store)
 		player := "Pepper"
 		request := newPostWinRequest(player)
 		response := httptest.NewRecorder()
@@ -83,6 +83,19 @@ func TestStoreWins(t *testing.T) {
 		assertCalls(t, len(store.winCalls), 1)
 		assertPlayer(t, store.winCalls[0], player)
 	})
+}
+
+func TestLeague(t *testing.T) {
+	store := StubPlayerStore{}
+	server := NewPlayerServer(&store)
+
+	t.Run("it returns 200 on /league", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/league", nil)
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+		assertStatus(t, response.Code, http.StatusOK)
+	})
+
 }
 
 func assertPlayer(t *testing.T, got, want string) {
