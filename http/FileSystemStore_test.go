@@ -1,23 +1,24 @@
 package main
 
 import (
-	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 )
 
 func TestFileSystemStore(t *testing.T) {
-	t.Run("/league from a reader", func(t *testing.T) {
+	t.Run("/league sorted", func(t *testing.T) {
 		database, cleanDatabase := createTempFile(t, `[
             {"Name": "Cleo", "Wins": 10},
             {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		assertNoError(err)
 		got := store.GetLeague()
 		want := []Player{
-			{"Cleo", 10},
 			{"Chris", 33},
+			{"Cleo", 10},
 		}
 		assertLeague(t, got, want)
 		//read again
@@ -29,7 +30,8 @@ func TestFileSystemStore(t *testing.T) {
         {"Name": "Cleo", "Wins": 10},
         {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		assertNoError(err)
 		got := store.GetPlayerScore("Chris")
 		assertScoreEquals(t, got, 33)
 	})
@@ -38,7 +40,8 @@ func TestFileSystemStore(t *testing.T) {
         {"Name": "Cleo", "Wins": 10},
         {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		assertNoError(err)
 		store.RecordWin("Chris")
 		got := store.GetPlayerScore("Chris")
 		want := 34
@@ -49,16 +52,29 @@ func TestFileSystemStore(t *testing.T) {
         {"Name": "Cleo", "Wins": 10},
         {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		assertNoError(err)
 		store.RecordWin("Pepper")
 		got := store.GetPlayerScore("Pepper")
 		want := 1
 		assertScoreEquals(t, got, want)
 	})
 
+	t.Run("works with an empty file", func(t *testing.T) {
+		database, cleanDatabase := createTempFile(t, "")
+		defer cleanDatabase()
+		_, err := NewFileSystemPlayerStore(database)
+		assertNoError(err)
+	})
 }
 
-func createTempFile(t *testing.T, initialData string) (io.ReadWriteSeeker, func()) {
+func assertNoError(err error) {
+	if err != nil {
+		log.Fatalf("problem creating file system player store, %v ", err)
+	}
+}
+
+func createTempFile(t *testing.T, initialData string) (*os.File, func()) {
 	t.Helper()
 	tmpfile, err := ioutil.TempFile("", "db")
 	if err != nil {

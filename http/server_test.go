@@ -13,9 +13,10 @@ import (
 const jsonContentType = "application/json"
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	database, cleanDatabase := createTempFile(t, "")
+	database, cleanDatabase := createTempFile(t, "[]")
 	defer cleanDatabase()
-	store := &FileSystemPlayerStore{database}
+	store, err := NewFileSystemPlayerStore(database)
+	assertNoError(err)
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
@@ -149,7 +150,7 @@ func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want s
 	}
 }
 
-func assertLeague(t *testing.T, got, wantedLeague []Player) {
+func assertLeague(t *testing.T, got, wantedLeague League) {
 	if !reflect.DeepEqual(got, wantedLeague) {
 		t.Errorf("got %v want %v", got, wantedLeague)
 	}
