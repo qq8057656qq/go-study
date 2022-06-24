@@ -1,4 +1,4 @@
-package main
+package poker
 
 import (
 	"encoding/json"
@@ -35,7 +35,7 @@ type PlayerServer struct {
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	json.NewEncoder(w).Encode(p.store.GetLeague())
-	//w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(poker.StatusOK)
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
